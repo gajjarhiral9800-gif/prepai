@@ -127,14 +127,16 @@ router.post('/forgot-password', async (req, res) => {
 
     // Send OTP email
     const emailResult = await sendOtpEmail(cleanEmail, otp, user.name);
-    const isDevOrAdmin = emailResult.devMode || cleanEmail === 'hiral2005gajjar@gmail.com';
+    if (!emailResult.sent) {
+      return res.status(500).json({
+        error: emailResult.error || 'Failed to deliver verification code to your email. Please ensure Brevo is configured on the server.'
+      });
+    }
 
     return res.json({
       success: true,
       email: cleanEmail,
-      message: `A 6-digit verification code has been sent to ${cleanEmail}`,
-      devMode: isDevOrAdmin,
-      devOtp: isDevOrAdmin ? otp : undefined
+      message: `A 6-digit verification code has been sent to ${cleanEmail}`
     });
   } catch (err) {
     console.error('Forgot password error:', err);
@@ -241,10 +243,14 @@ router.post('/resend-otp', async (req, res) => {
     const otp = crypto.randomInt(100000, 999999).toString();
     otpStore.saveOtp(user.email, otp);
     const emailResult = await sendOtpEmail(user.email, otp, user.name);
+    if (!emailResult.sent) {
+      return res.status(500).json({
+        error: emailResult.error || 'Failed to deliver verification code to your email. Please ensure Brevo is configured on the server.'
+      });
+    }
 
     return res.json({
-      message: `A new 6-digit code has been sent to ${user.email}`,
-      devMode: emailResult.devMode || false
+      message: `A new 6-digit code has been sent to ${user.email}`
     });
   } catch (err) {
     console.error('Resend OTP error:', err);

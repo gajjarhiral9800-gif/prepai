@@ -36,7 +36,6 @@ function Login({ onSwitchToRegister, prefilledEmail = '', initialSuccessMsg = ''
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState(initialSuccessMsg || '');
   const [loading, setLoading] = useState(false);
-  const [devMode, setDevMode] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
   const { login, forgotPassword, resetPassword } = useAuth();
@@ -112,13 +111,9 @@ function Login({ onSwitchToRegister, prefilledEmail = '', initialSuccessMsg = ''
     try {
       const res = await forgotPassword(forgotEmail.trim().toLowerCase());
       setSuccessMsg(res.message || `A 6-digit verification code was sent to ${forgotEmail}`);
-      setDevMode(Boolean(res.devMode));
       setResendCooldown(60);
       setMode('forgot-verify');
-
-      if (res.devOtp) {
-        handlePasteDigits(res.devOtp);
-      }
+      setOtpDigits(['', '', '', '', '', '']);
     } catch (err) {
       setError(err.message || 'Could not send reset code. Please check your email.');
     } finally {
@@ -220,9 +215,7 @@ function Login({ onSwitchToRegister, prefilledEmail = '', initialSuccessMsg = ''
       const res = await forgotPassword(forgotEmail.trim().toLowerCase());
       setSuccessMsg(res.message || `A new verification code was sent to ${forgotEmail}`);
       setResendCooldown(60);
-      if (res.devOtp) {
-        handlePasteDigits(res.devOtp);
-      }
+      setOtpDigits(['', '', '', '', '', '']);
     } catch (err) {
       setError(err.message || 'Failed to resend code.');
     } finally {
@@ -589,12 +582,6 @@ function Login({ onSwitchToRegister, prefilledEmail = '', initialSuccessMsg = ''
               <ArrowLeft size={16} /> Back to Sign In
             </button>
           </form>
-
-          {devMode && (
-            <div className="otp-dev-hint">
-              💡 <strong>Development Mode:</strong> Verification code is also logged to your backend terminal console.
-            </div>
-          )}
         </>
       )}
     </div>
