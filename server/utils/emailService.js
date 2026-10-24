@@ -5,19 +5,24 @@ import nodemailer from 'nodemailer';
  * Bypasses cloud SMTP blocking on Render / Netlify.
  */
 async function sendViaBrevo({ toEmail, otp, userName, htmlContent, textContent }) {
-  const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_USER;
+  const apiKey = (process.env.BREVO_API_KEY || '').trim().replace(/^['"]|['"]$/g, '');
+  const senderEmail = (process.env.BREVO_SENDER_EMAIL || process.env.EMAIL_USER || '').trim().replace(/^['"]|['"]$/g, '');
   const senderName = process.env.BREVO_SENDER_NAME || 'PrepAI Security';
 
   if (!apiKey || !senderEmail) {
     return null;
   }
 
+  // Check if user accidentally pasted an SMTP key (starts with xsmtpsib-) instead of an API Key (starts with xkeysib-)
+  if (apiKey.startsWith('xsmtpsib-')) {
+    throw new Error("You used an SMTP Key (starts with 'xsmtpsib-'). In Brevo, go to 'SMTP & API' -> click the 'API Keys' tab (next to SMTP) -> click 'Generate a new API key' (starts with 'xkeysib-').");
+  }
+
   const response = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
     headers: {
       'accept': 'application/json',
-      'api-key': apiKey.trim(),
+      'api-key': apiKey,
       'content-type': 'application/json',
     },
     body: JSON.stringify({
