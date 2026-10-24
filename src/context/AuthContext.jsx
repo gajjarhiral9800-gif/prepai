@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   );
   const [loading, setLoading] = useState(true);
 
-  // All API requests go to the Render backend.
+  // All API requests go to Render backend
   const apiFetch = async (url, options = {}) => {
     const headers = {
       'Content-Type': 'application/json',
@@ -30,7 +30,6 @@ export const AuthProvider = ({ children }) => {
       headers.Authorization = `Bearer ${currentToken}`;
     }
 
-    // Prevent relative URLs from accidentally targeting Netlify.
     const fullUrl = url.startsWith('http')
       ? url
       : `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
@@ -44,7 +43,7 @@ export const AuthProvider = ({ children }) => {
 
     if (!contentType.includes('application/json')) {
       throw new Error(
-        `Backend returned a non-JSON response (HTTP ${res.status}). Check the Render API URL.`
+        `Backend returned non-JSON response (HTTP ${res.status}). Check Render backend.`
       );
     }
 
@@ -57,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  // Verify the saved session when the app loads.
+  // Verify existing session
   useEffect(() => {
     let cancelled = false;
 
@@ -74,7 +73,7 @@ export const AuthProvider = ({ children }) => {
           setUser(data.user);
         }
       } catch (err) {
-        console.warn('Failed to verify token:', err.message);
+        console.warn('Token verification failed:', err.message);
 
         if (!cancelled) {
           sessionStorage.removeItem('prepai_token');
@@ -118,19 +117,26 @@ export const AuthProvider = ({ children }) => {
     return data;
   };
 
-  // Register
+  // Registration
   const register = async (name, email, password) => {
-    return await apiFetch('/api/auth/register', {
+    return apiFetch('/api/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password,
+      }),
     });
   };
 
-  // Verify login OTP
+  // Verify OTP
   const verifyOtp = async (email, otp) => {
     const data = await apiFetch('/api/auth/verify-otp', {
       method: 'POST',
-      body: JSON.stringify({ email, otp }),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        otp: String(otp).trim(),
+      }),
     });
 
     if (data.token) {
@@ -144,25 +150,33 @@ export const AuthProvider = ({ children }) => {
 
   // Resend OTP
   const resendOtp = async (email) => {
-    return await apiFetch('/api/auth/resend-otp', {
+    return apiFetch('/api/auth/resend-otp', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+      }),
     });
   };
 
   // Forgot password
   const forgotPassword = async (email) => {
-    return await apiFetch('/api/auth/forgot-password', {
+    return apiFetch('/api/auth/forgot-password', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+      }),
     });
   };
 
   // Reset password
   const resetPassword = async (email, otp, newPassword) => {
-    return await apiFetch('/api/auth/reset-password', {
+    return apiFetch('/api/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ email, otp, newPassword }),
+      body: JSON.stringify({
+        email: email.trim().toLowerCase(),
+        otp: String(otp).trim(),
+        newPassword,
+      }),
     });
   };
 
