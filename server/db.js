@@ -56,19 +56,40 @@ async function seedAdminUser() {
 }
 
 // Attempt MongoDB Connection
-const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/prepai';
+// Attempt MongoDB Connection
+const mongoUri = process.env.MONGODB_URI;
 
-mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 2000 })
-  .then(() => {
+export const dbReady = (async () => {
+  if (!mongoUri) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('MONGODB_URI is missing in production');
+    }
+
+    console.warn('MONGODB_URI missing; using local JSON fallback.');
+    await seedAdminUser();
+    return;
+  }
+
+  try {
+    await mongoose.connect(mongoUri, {
+      serverSelectionTimeoutMS: 15000
+    });
+
     isMongoConnected = true;
-    console.log('🍃 MongoDB Connected successfully to:', mongoUri);
-    seedAdminUser();
-  })
-  .catch((err) => {
+    console.log('MongoDB Atlas connected successfully');
+
+    await seedAdminUser();
+  } catch (err) {
     isMongoConnected = false;
-    console.warn('⚠️ Local MongoDB not detected. Operating with JSON File Database fallback (server/data/db.json).');
-    seedAdminUser();
-  });
+    console.error('MongoDB connection failed:', err.message);
+
+    if (process.env.NODE_ENV === 'production') {
+      throw err;
+    }
+
+    await seedAdminUser();
+  }
+})();
 
 // --- JSON File Fallback Engine ---
 if (!fs.existsSync(DATA_DIR)) {

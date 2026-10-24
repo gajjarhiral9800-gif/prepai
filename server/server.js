@@ -1,7 +1,7 @@
 
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
@@ -10,9 +10,9 @@ import authRoutes from './routes/auth.js';
 import userRoutes from './routes/user.js';
 import aiRoutes from './routes/ai.js';
 import adminRoutes from './routes/admin.js';
-import { db } from './db.js';
+import { db, dbReady } from './db.js';
 
-dotenv.config();
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,6 +115,13 @@ app.use((err, req, res, next) => {
 });
 
 // Start server on Render's assigned port
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`PrepAI backend listening on port ${PORT}`);
-});
+dbReady
+  .then(() => {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`PrepAI backend listening on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Database initialization failed:', err.message);
+    process.exit(1);
+  });
