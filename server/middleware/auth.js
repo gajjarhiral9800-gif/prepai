@@ -12,6 +12,10 @@ export const authMiddleware = async (req, res, next) => {
 
   const token = authHeader.split(' ')[1];
 
+  if (!token || token === 'null' || token === 'undefined') {
+    return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
     const user = await db.findUserById(decoded.id);

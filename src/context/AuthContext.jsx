@@ -8,23 +8,28 @@ import React, {
 
 const AuthContext = createContext();
 
-const API_URL = 'https://prepai-2nwb.onrender.com';
+export const API_URL = 'https://prepai-2nwb.onrender.com';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(
-    () => sessionStorage.getItem('prepai_token') || ''
+    () => sessionStorage.getItem('prepai_token') || localStorage.getItem('prepai_token') || ''
   );
   const [loading, setLoading] = useState(true);
 
   // All API requests go to Render backend
   const apiFetch = async (url, options = {}) => {
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
+
     const headers = {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...options.headers,
     };
 
-    const currentToken = sessionStorage.getItem('prepai_token');
+    const currentToken =
+      token ||
+      sessionStorage.getItem('prepai_token') ||
+      localStorage.getItem('prepai_token');
 
     if (currentToken) {
       headers.Authorization = `Bearer ${currentToken}`;
@@ -77,6 +82,7 @@ export const AuthProvider = ({ children }) => {
 
         if (!cancelled) {
           sessionStorage.removeItem('prepai_token');
+          localStorage.removeItem('prepai_token');
           setToken('');
           setUser(null);
         }
@@ -110,6 +116,7 @@ export const AuthProvider = ({ children }) => {
 
     if (data.token) {
       sessionStorage.setItem('prepai_token', data.token);
+      localStorage.setItem('prepai_token', data.token);
       setToken(data.token);
       setUser(data.user);
     }
@@ -141,6 +148,7 @@ export const AuthProvider = ({ children }) => {
 
     if (data.token) {
       sessionStorage.setItem('prepai_token', data.token);
+      localStorage.setItem('prepai_token', data.token);
       setToken(data.token);
       setUser(data.user);
     }
@@ -183,6 +191,7 @@ export const AuthProvider = ({ children }) => {
   // Logout
   const logout = () => {
     sessionStorage.removeItem('prepai_token');
+    localStorage.removeItem('prepai_token');
     setToken('');
     setUser(null);
   };
@@ -213,6 +222,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateApiKey,
         apiFetch,
+        API_URL,
       }}
     >
       {children}

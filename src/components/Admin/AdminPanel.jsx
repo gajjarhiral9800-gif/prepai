@@ -173,15 +173,10 @@ function AdminPanel() {
       formData.append('subject', finalSubject);
       formData.append('resourceFile', resFile);
 
-      const res = await fetch('/api/admin/resources', {
+      const data = await apiFetch('/api/admin/resources', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('prepai_token') || localStorage.getItem('prepai_token')}`
-        },
         body: formData
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Upload failed');
 
       setResources(prev => [data.resource, ...prev]);
       setResTitle('');

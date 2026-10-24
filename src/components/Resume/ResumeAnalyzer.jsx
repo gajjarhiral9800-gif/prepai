@@ -102,21 +102,11 @@ function ResumeAnalyzer() {
         formData.append('resumeFile', selectedFile);
         formData.append('jobDescription', jobDescription);
 
-        const res = await fetch('/api/ai/resume/upload-analyze', {
+        data = await apiFetch('/api/ai/resume/upload-analyze', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('prepai_token')}`
-          },
           body: formData
         });
 
-        const contentType = res.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error('Server returned invalid response. Please ensure backend server is running on port 5000.');
-        }
-
-        data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Upload failed');
         if (data.extractedText) {
           setResumeText(data.extractedText);
         }
